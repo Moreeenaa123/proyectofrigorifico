@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frigo Sec AM – Sistema de Seguridad Industrial</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- PARTICLES -->
+<div class="frost-wrap" id="frostWrap"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-brand">
+    <!-- Inline SVG logo simplified from the uploaded logo -->
+    <svg class="nav-logo-svg" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20 3L35 11V22C35 29 28 35.5 20 38C12 35.5 5 29 5 22V11L20 3Z" fill="#0B132B" stroke="#1C6DD0" stroke-width="1.5"/>
+      <path d="M20 3L33 10.5V22C33 28 27 34 20 36.5C13 34 7 28 7 22V10.5L20 3Z" fill="#0E2050"/>
+      <line x1="20" y1="11" x2="20" y2="29" stroke="#1C6DD0" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="11" y1="20" x2="29" y2="20" stroke="#1C6DD0" stroke-width="1.8" stroke-linecap="round"/>
+      <line x1="13.5" y1="13.5" x2="26.5" y2="26.5" stroke="#1C6DD0" stroke-width="1.4" stroke-linecap="round"/>
+      <line x1="26.5" y1="13.5" x2="13.5" y2="26.5" stroke="#1C6DD0" stroke-width="1.4" stroke-linecap="round"/>
+      <circle cx="27" cy="27" r="5" fill="#0B132B" stroke="#1C6DD0" stroke-width="1.2"/>
+      <circle cx="27" cy="26" r="1.5" fill="#1C6DD0"/>
+      <rect x="25.5" y="27" width="3" height="2.5" rx="0.5" fill="#1C6DD0"/>
+    </svg>
+    <div>
+      <div class="nav-brand-text">Frigo<span> Sec</span></div>
+      <span class="nav-brand-sub">A M</span>
+    </div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Características</a></li>
+    <li><a href="#howto">Funcionamiento</a></li>
+    <li><a href="#components">Componentes</a></li>
+    <li><a href="#sim">Simulación</a></li>
+    <li><a href="#code">Código</a></li>
+    <li><a href="#registros">Registros</a></li>
+  </ul>
+  <a href="#sim" class="nav-cta">Probar Demo →</a>
+</nav>
+
+<div class="content">
+
+<!-- HERO -->
+<div class="hero" id="inicio">
+  <div>
+    <div class="hero-eyebrow">Proyecto Arduino · Curso 7°2</div>
+    <h1>
+      <span class="thin">Sistema de</span><br>
+      <span class="accent">Seguridad</span><br>
+      Frigorífico
+    </h1>
+    <p class="hero-desc">Control de acceso inteligente con código numérico y botón de emergencia interno. Diseñado para proteger a los trabajadores en cámaras de frío industrial.</p>
+    <div class="hero-chips">
+      <span class="chip">👩‍🏫 Prof. Coronel Leonel</span>
+      <span class="chip">📅 22/04/2026</span>
+      <span class="chip">🔧 Arduino Uno</span>
+      <span class="chip">🌡️ −18 °C</span>
+    </div>
+    <div class="hero-actions">
+      <a href="#sim" class="btn-solid">Probar simulación</a>
+      <a href="#howto" class="btn-ghost">Ver funcionamiento →</a>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div style="position:relative;">
+      <div class="float-badge fb-top">
+        <span class="fb-icon">🌡️</span>
+        <div><div class="fb-text">−18 °C</div><div class="fb-sub">Cámara activa</div></div>
+      </div>
+      <div class="hero-card">
+        <div class="hero-card-header">
+          <div class="card-logo-area">
+            <div class="card-logo-icon">❄️</div>
+            <div>
+              <div class="card-brand">Frigo Sec AM</div>
+              <div class="card-sub">Sistema de seguridad</div>
+            </div>
+          </div>
+          <div class="temp-display">
+            <div class="temp-big">−18</div>
+            <div style="display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:0.4rem;">
+              <div class="temp-unit">°C</div>
+              <div class="temp-label">Cámara Principal</div>
+            </div>
+          </div>
+        </div>
+        <div class="hero-card-body">
+          <div class="status-row">
+            <div class="status-dot-sm"></div>
+            <span class="status-text">Sistema activo · En espera de código</span>
+          </div>
+          <div class="keypad-mini" id="heroKp"></div>
+          <button class="card-btn" onclick="this.textContent='✅ Acceso concedido'; setTimeout(()=>this.textContent='Ingresar código',2000)">Ingresar código</button>
+        </div>
+      </div>
+      <div class="float-badge fb-bot">
+        <span class="fb-icon">🚨</span>
+        <div><div class="fb-text">Emergencia</div><div class="fb-sub">Siempre activo</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat-item"><div class="stat-num">5</div><div class="stat-label">Dígitos de acceso</div></div>
+    <div class="stat-item"><div class="stat-num">90°</div><div class="stat-label">Rotación del servo</div></div>
+    <div class="stat-item"><div class="stat-num">3s</div><div class="stat-label">Tiempo apertura</div></div>
+    <div class="stat-item"><div class="stat-num">1kHz</div><div class="stat-label">Alarma emergencia</div></div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<div class="section" id="features">
+  <div class="section-tag reveal">Funcionalidades</div>
+  <h2 class="section-title reveal">¿Qué hace <span class="accent">Frigo Sec AM</span>?</h2>
+  <p class="section-lead reveal">Un sistema completo basado en Arduino que cubre control de acceso, indicación visual y sonora, y respuesta ante emergencias.</p>
+  <div class="feat-grid">
+    <div class="feat-card reveal">
+      <div class="feat-icon">🔑</div>
+      <h3>Acceso por Código</h3>
+      <p>Ingreso mediante teclado matricial 4×4 con código de 5 dígitos configurable. Solo el personal autorizado puede acceder.</p>
+    </div>
+    <div class="feat-card reveal reveal-delay-1">
+      <div class="feat-icon">🚨</div>
+      <h3>Emergencia Interna</h3>
+      <p>Botón físico dentro de la cámara que abre la puerta de inmediato, activando alarma continua para alertar al exterior.</p>
+    </div>
+    <div class="feat-card reveal reveal-delay-2">
+      <div class="feat-icon">⚙️</div>
+      <h3>Servo Motor</h3>
+      <p>Control mecánico preciso de la cerradura. Gira 90° para abrir y vuelve a 0° al cerrar. Fuerza y velocidad configurables.</p>
+    </div>
+    <div class="feat-card reveal">
+      <div class="feat-icon">💡</div>
+      <h3>LEDs Indicadores</h3>
+      <p>LED verde para acceso permitido, LED rojo para acceso denegado. Retroalimentación visual instantánea sin ambigüedad.</p>
+    </div>
+    <div class="feat-card reveal reveal-delay-1">
+      <div class="feat-icon">🔊</div>
+      <h3>Alertas Sonoras</h3>
+      <p>Buzzer con tonos diferenciados: confirmación de acceso (1000 Hz), error de código (400 Hz), y alarma de emergencia continua.</p>
+    </div>
+    <div class="feat-card reveal reveal-delay-2">
+      <div class="feat-icon">🛡️</div>
+      <h3>Código Configurable</h3>
+      <p>La clave maestra se actualiza directamente en el código fuente. Permite rotación de credenciales según protocolos del establecimiento.</p>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="how-section" id="howto">
+  <div class="how-inner">
+    <div class="how-grid">
+      <div>
+        <div class="section-tag reveal">Lógica del sistema</div>
+        <h2 class="section-title reveal">Flujo de <span class="accent">funcionamiento</span></h2>
+        <p class="section-lead reveal">Dos modos de operación: acceso normal por código y emergencia de apertura inmediata.</p>
+        <div class="steps" style="margin-top:2rem;">
+          <div class="step reveal">
+            <div class="step-num">01</div>
+            <div>
+              <h4>Ingreso de código</h4>
+              <p>El operario presiona hasta 5 teclas en el teclado 4×4. Cada pulsación se registra internamente.</p>
+            </div>
+          </div>
+          <div class="step reveal">
+            <div class="step-num">02</div>
+            <div>
+              <h4>Confirmación con #</h4>
+              <p>Al presionar # el Arduino compara la entrada con la clave maestra almacenada en memoria.</p>
+            </div>
+          </div>
+          <div class="step reveal">
+            <div class="step-num">03A</div>
+            <div>
+              <h4>Acceso concedido ✅</h4>
+              <p>Servo → 90°, LED verde enciende, buzzer emite tono corto. Puerta permanece abierta 3 segundos.</p>
+            </div>
+          </div>
+          <div class="step reveal">
+            <div class="step-num">03B</div>
+            <div>
+              <h4>Acceso denegado ❌</h4>
+              <p>LED rojo enciende, buzzer emite alerta de error 400 Hz. Sistema se reinicia para nuevo intento.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="emergency-panel reveal">
+          <div class="ep-header">
+            <div class="ep-badge">🆘</div>
+            <div class="ep-title">Protocolo de Emergencia Interna</div>
+          </div>
+          <div class="ep-steps">
+            <div class="ep-step"><span class="ep-arrow">→</span> Sensor analógico A0 detecta pulsación (valor > 500)</div>
+            <div class="ep-step"><span class="ep-arrow">→</span> Servo gira inmediatamente a 90° — puerta abierta</div>
+            <div class="ep-step"><span class="ep-arrow">→</span> LED verde enciende indicando salida libre</div>
+            <div class="ep-step"><span class="ep-arrow">→</span> Buzzer activa alarma continua a 1000 Hz</div>
+            <div class="ep-step"><span class="ep-arrow">→</span> Sistema mantiene estado durante 5 segundos</div>
+            <div class="ep-step"><span class="ep-arrow">→</span> Buzzer se apaga, servo vuelve a 0° — reinicio completo</div>
+          </div>
+        </div>
+
+        <!-- DFD -->
+        <div style="margin-top:2rem; background:rgba(242,247,255,0.05); border:1px solid rgba(242,247,255,0.1); border-radius:18px; padding:1.8rem;" class="reveal">
+          <div style="font-family:var(--font-head);font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--mint);margin-bottom:1.3rem;">Diagrama de Flujo de Datos</div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:0;overflow-x:auto;">
+            <div style="text-align:center;background:rgba(242,247,255,0.06);border:1px solid rgba(28,109,208,0.25);border-radius:12px;padding:1rem 1.2rem;min-width:110px;">
+              <div style="font-size:1.4rem;margin-bottom:0.4rem;">⌨️</div>
+              <div style="font-family:var(--font-head);font-weight:700;font-size:0.75rem;color:var(--glacier);">Entrada</div>
+              <div style="font-size:0.65rem;color:rgba(242,247,255,0.35);">Teclado 4×4</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;padding:0 0.7rem;">
+              <div style="width:55px;height:2px;background:linear-gradient(90deg,#1C6DD0,#BFE6D4);position:relative;">
+                <div style="position:absolute;right:-1px;top:-4px;border:5px solid transparent;border-left-color:#BFE6D4;"></div>
+              </div>
+              <div style="font-size:0.6rem;color:rgba(242,247,255,0.3);margin-top:0.3rem;">código</div>
+            </div>
+            <div style="text-align:center;background:rgba(28,109,208,0.15);border:1px solid rgba(28,109,208,0.35);border-radius:12px;padding:1rem 1.2rem;min-width:110px;">
+              <div style="font-size:1.4rem;margin-bottom:0.4rem;">🖥️</div>
+              <div style="font-family:var(--font-head);font-weight:700;font-size:0.75rem;color:var(--glacier);">Proceso</div>
+              <div style="font-size:0.65rem;color:rgba(242,247,255,0.35);">Arduino Uno</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;padding:0 0.7rem;">
+              <div style="width:55px;height:2px;background:linear-gradient(90deg,#1C6DD0,#BFE6D4);position:relative;">
+                <div style="position:absolute;right:-1px;top:-4px;border:5px solid transparent;border-left-color:#BFE6D4;"></div>
+              </div>
+              <div style="font-size:0.6rem;color:rgba(242,247,255,0.3);margin-top:0.3rem;">señales</div>
+            </div>
+            <div style="text-align:center;background:rgba(242,247,255,0.06);border:1px solid rgba(28,109,208,0.25);border-radius:12px;padding:1rem 1.2rem;min-width:110px;">
+              <div style="font-size:1.4rem;margin-bottom:0.4rem;">🔓</div>
+              <div style="font-family:var(--font-head);font-weight:700;font-size:0.75rem;color:var(--glacier);">Salida</div>
+              <div style="font-size:0.65rem;color:rgba(242,247,255,0.35);">Servo + LEDs</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPONENTS -->
+<div class="comp-section" id="components">
+  <div class="comp-inner">
+    <div class="section-tag reveal">Hardware</div>
+    <h2 class="section-title reveal">Componentes <span class="accent">técnicos</span></h2>
+    <div class="comp-layout" style="margin-top:3rem;">
+      <div class="comp-grid reveal">
+        <div class="comp-tile"><span>🧠</span><div><div class="comp-tile-text">Arduino Uno</div><div class="comp-tile-sub">Microcontrolador</div></div></div>
+        <div class="comp-tile"><span>⌨️</span><div><div class="comp-tile-text">Teclado 4×4</div><div class="comp-tile-sub">Matricial</div></div></div>
+        <div class="comp-tile"><span>⚙️</span><div><div class="comp-tile-text">Servo Motor</div><div class="comp-tile-sub">Pin 10</div></div></div>
+        <div class="comp-tile"><span>🟢</span><div><div class="comp-tile-text">LED Verde</div><div class="comp-tile-sub">Pin 12</div></div></div>
+        <div class="comp-tile"><span>🔴</span><div><div class="comp-tile-text">LED Rojo</div><div class="comp-tile-sub">Pin 11</div></div></div>
+        <div class="comp-tile"><span>🔊</span><div><div class="comp-tile-text">Buzzer</div><div class="comp-tile-sub">Pin 13</div></div></div>
+        <div class="comp-tile"><span>🔘</span><div><div class="comp-tile-text">Pulsador</div><div class="comp-tile-sub">Pin A0</div></div></div>
+        <div class="comp-tile"><span>⚡</span><div><div class="comp-tile-text">Resistencias</div><div class="comp-tile-sub">Protección</div></div></div>
+        <div class="comp-tile"><span>🔌</span><div><div class="comp-tile-text">Protoboard</div><div class="comp-tile-sub">Montaje</div></div></div>
+        <div class="comp-tile"><span>🪢</span><div><div class="comp-tile-text">Cables Dupont</div><div class="comp-tile-sub">Conexión</div></div></div>
+      </div>
+      <div class="reveal">
+        <h3 style="font-family:var(--font-head);font-weight:800;font-size:1.3rem;color:var(--polar);margin-bottom:1.5rem;">Mapa de pines <span style="color:var(--glacier)">Arduino</span></h3>
+        <table class="pin-table">
+          <thead><tr><th>Pin</th><th>Componente</th><th>Función</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pin-tag">2–9</span></td><td>Teclado Matricial</td><td>Filas y columnas</td></tr>
+            <tr><td><span class="pin-tag">10</span></td><td>Servo Motor</td><td>Apertura de puerta</td></tr>
+            <tr><td><span class="pin-tag">11</span></td><td>LED Rojo</td><td>Acceso denegado</td></tr>
+            <tr><td><span class="pin-tag">12</span></td><td>LED Verde</td><td>Acceso permitido</td></tr>
+            <tr><td><span class="pin-tag">13</span></td><td>Buzzer</td><td>Alertas sonoras</td></tr>
+            <tr><td><span class="pin-tag">A0</span></td><td>Botón Emergencia</td><td>Apertura inmediata</td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:1.5rem;padding:1rem 1.2rem;background:rgba(191,230,212,0.15);border:1px solid rgba(191,230,212,0.3);border-radius:12px;font-family:var(--font-head);font-size:0.8rem;color:rgba(11,19,43,0.65);line-height:1.6;">
+          🛠️ <strong>Simulación</strong> — El sistema completo fue verificado en <strong>Tinkercad</strong> antes de implementación física. Todos los componentes se conectan mediante protoboard y resistencias de protección.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SIMULATION -->
+<div class="sim-section" id="sim">
+  <div class="sim-inner">
+    <div class="section-tag reveal">Demo interactiva</div>
+    <h2 class="section-title reveal">Probá el sistema <span class="accent">en vivo</span></h2>
+    <p class="section-lead reveal" style="margin-bottom:0;">El código correcto es <strong style="color:var(--glacier)">12345</strong>. Usá el teclado o probá la emergencia.</p>
+    <div class="sim-layout">
+      <!-- Device -->
+      <div class="sim-device reveal">
+        <div class="sim-brand-row">
+          <div class="sim-brand-dot"></div>
+          <span class="sim-brand-label">Frigo Sec AM · Panel de acceso</span>
+        </div>
+        <div class="sim-screen" id="simScreen">_ _ _ _ _</div>
+        <div class="sim-kp">
+          <button class="sk" onclick="sk('1')">1</button>
+          <button class="sk" onclick="sk('2')">2</button>
+          <button class="sk" onclick="sk('3')">3</button>
+          <button class="sk" onclick="sk('A')">A</button>
+          <button class="sk" onclick="sk('4')">4</button>
+          <button class="sk" onclick="sk('5')">5</button>
+          <button class="sk" onclick="sk('6')">6</button>
+          <button class="sk" onclick="sk('B')">B</button>
+          <button class="sk" onclick="sk('7')">7</button>
+          <button class="sk" onclick="sk('8')">8</button>
+          <button class="sk" onclick="sk('9')">9</button>
+          <button class="sk" onclick="sk('C')">C</button>
+          <button class="sk del" onclick="sk('*')">✕</button>
+          <button class="sk" onclick="sk('0')">0</button>
+          <button class="sk ok" onclick="sk('#')">#</button>
+          <button class="sk" onclick="sk('D')">D</button>
+        </div>
+        <button class="sim-em-btn" onclick="simEmergency()">🚨 BOTÓN DE EMERGENCIA INTERNO</button>
+        <p class="sim-hint-text">Código de 5 dígitos · # confirma · * borra</p>
+      </div>
+      <!-- Status -->
+      <div class="sim-status reveal">
+        <div class="sim-status-label">Estado del sistema</div>
+        <div class="door-state closed" id="doorSt">🚪 PUERTA CERRADA</div>
+        <div class="led-panel">
+          <div class="led-row"><div class="led" id="lg"></div><span class="led-lbl">LED Verde — Acceso permitido</span></div>
+          <div class="led-row"><div class="led" id="lr"></div><span class="led-lbl">LED Rojo — Acceso denegado</span></div>
+          <div class="buzzer-row" id="bz">🔇 Buzzer inactivo</div>
+        </div>
+        <div class="log-box" id="logBox">Sistema iniciado. Cerradura en posición 0°.<br>Esperando ingreso de código...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CODE -->
+<div class="code-section" id="code">
+  <div class="code-inner">
+    <div class="section-tag reveal">Programación</div>
+    <h2 class="section-title reveal">Código <span class="accent">C++ / Arduino</span></h2>
+    <div class="code-wrap reveal">
+      <div class="code-bar">
+        <span class="cdot cr"></span><span class="cdot cy"></span><span class="cdot cg"></span>
+        <span class="cfile">seguridad_frigorifico.ino — Frigo Sec AM</span>
+      </div>
+      <div class="code-body">
+<pre><span class="cm">// ═══════════════════════════════════════════════════════
+//  Frigo Sec AM · Sistema de Seguridad para Frigorífico
+//  Alumnas: Santillan Morena y Alegre Ariana
+//  Curso 7°2 · Prof. Coronel Leonel · 22/04/2026
+// ═══════════════════════════════════════════════════════</span>
+
+<span class="kw">#include</span> <span class="str">&lt;Keypad.h&gt;</span>
+<span class="kw">#include</span> <span class="str">&lt;Servo.h&gt;</span>
+
+<span class="cm">// ── TECLADO ───────────────────────────────────────────</span>
+<span class="kw">const</span> <span class="nb">byte</span> FILAS = <span class="str">4</span>, COLUMNAS = <span class="str">4</span>;
+
+<span class="nb">char</span> teclas[FILAS][COLUMNAS] = {
+  {<span class="str">'1'</span>,<span class="str">'2'</span>,<span class="str">'3'</span>,<span class="str">'A'</span>},
+  {<span class="str">'4'</span>,<span class="str">'5'</span>,<span class="str">'6'</span>,<span class="str">'B'</span>},
+  {<span class="str">'7'</span>,<span class="str">'8'</span>,<span class="str">'9'</span>,<span class="str">'C'</span>},
+  {<span class="str">'*'</span>,<span class="str">'0'</span>,<span class="str">'#'</span>,<span class="str">'D'</span>}
+};
+<span class="nb">byte</span> pinesFilas[FILAS]       = {<span class="str">9, 8, 7, 6</span>};
+<span class="nb">byte</span> pinesColumnas[COLUMNAS] = {<span class="str">5, 4, 3, 2</span>};
+
+Keypad teclado = Keypad(
+  makeKeymap(teclas), pinesFilas, pinesColumnas, FILAS, COLUMNAS
+);
+
+<span class="cm">// ── PINES ─────────────────────────────────────────────</span>
+Servo miServo;
+<span class="kw">const</span> <span class="nb">int</span> PIN_ROJO      = <span class="str">11</span>;
+<span class="kw">const</span> <span class="nb">int</span> PIN_VERDE     = <span class="str">12</span>;
+<span class="kw">const</span> <span class="nb">int</span> PIN_BUZZER    = <span class="str">13</span>;
+<span class="kw">const</span> <span class="nb">int</span> PIN_EMERGENCIA = A0;
+
+<span class="cm">// ── ACCESO ────────────────────────────────────────────</span>
+<span class="nb">char</span> claveMaestra[] = <span class="str">"12345"</span>;
+<span class="nb">char</span> claveIngresada[<span class="str">6</span>];
+<span class="nb">byte</span> indice = <span class="str">0</span>;
+
+<span class="fn">void</span> setup() {
+  miServo.attach(<span class="str">10</span>);
+  miServo.write(<span class="str">0</span>);  <span class="cm">// Cerradura trabada</span>
+  pinMode(PIN_ROJO,       OUTPUT);
+  pinMode(PIN_VERDE,      OUTPUT);
+  pinMode(PIN_BUZZER,     OUTPUT);
+  pinMode(PIN_EMERGENCIA, INPUT);
+  digitalWrite(PIN_ROJO,  LOW);
+  digitalWrite(PIN_VERDE, LOW);
+}
+
+<span class="fn">void</span> loop() {
+
+  <span class="cm">// 🚨 EMERGENCIA — prioridad máxima ────────────────────</span>
+  <span class="kw">if</span> (analogRead(PIN_EMERGENCIA) > <span class="str">500</span>) {
+    digitalWrite(PIN_VERDE, HIGH);
+    tone(PIN_BUZZER, <span class="str">1000</span>);   <span class="cm">// Alarma continua</span>
+    miServo.write(<span class="str">90</span>);         <span class="cm">// Abre puerta</span>
+    delay(<span class="str">5000</span>);
+    noTone(PIN_BUZZER);
+    miServo.write(<span class="str">0</span>);
+    digitalWrite(PIN_VERDE, LOW);
+    <span class="kw">return</span>;
+  }
+
+  <span class="cm">// 🔐 ACCESO NORMAL ────────────────────────────────────</span>
+  <span class="nb">char</span> tecla = teclado.getKey();
+  <span class="kw">if</span> (!tecla) <span class="kw">return</span>;
+
+  <span class="kw">if</span> (tecla == <span class="str">'*'</span>) {          <span class="cm">// Borrar</span>
+    indice = <span class="str">0</span>;
+    memset(claveIngresada, <span class="str">0</span>, <span class="kw">sizeof</span>(claveIngresada));
+    <span class="kw">return</span>;
+  }
+
+  <span class="kw">if</span> (tecla != <span class="str">'#'</span> && indice < <span class="str">5</span>) {
+    claveIngresada[indice++] = tecla;
+    <span class="kw">return</span>;
+  }
+
+  <span class="kw">if</span> (tecla == <span class="str">'#'</span>) {
+    claveIngresada[indice] = <span class="str">'\0'</span>;
+
+    <span class="kw">if</span> (strcmp(claveIngresada, claveMaestra) == <span class="str">0</span>) {
+      <span class="cm">// ✅ Correcto</span>
+      digitalWrite(PIN_VERDE, HIGH);
+      tone(PIN_BUZZER, <span class="str">1000</span>); delay(<span class="str">200</span>); noTone(PIN_BUZZER);
+      miServo.write(<span class="str">90</span>);
+      delay(<span class="str">3000</span>);
+      miServo.write(<span class="str">0</span>);
+      digitalWrite(PIN_VERDE, LOW);
+    } <span class="kw">else</span> {
+      <span class="cm">// ❌ Incorrecto</span>
+      digitalWrite(PIN_ROJO, HIGH);
+      tone(PIN_BUZZER, <span class="str">400</span>); delay(<span class="str">500</span>); noTone(PIN_BUZZER);
+      delay(<span class="str">1000</span>);
+      digitalWrite(PIN_ROJO, LOW);
+    }
+
+    indice = <span class="str">0</span>;
+    memset(claveIngresada, <span class="str">0</span>, <span class="kw">sizeof</span>(claveIngresada));
+  }
+}</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DATABASE -->
+<div class="db-section" id="registros">
+  <div class="db-inner">
+    <div class="section-tag reveal">Registros del Sistema</div>
+    <h2 class="section-title reveal">Base de <span class="accent">Datos</span></h2>
+    <p class="section-lead reveal">Historial completo de accesos, ingresos autorizados y alertas de emergencia registradas en tiempo real por el sistema.</p>
+
+    <div class="db-header-row reveal">
+      <div class="db-stats-mini">
+        <div class="db-stat-pill"><span class="dot dot-green"></span><span id="countOk">0</span> Autorizados</div>
+        <div class="db-stat-pill"><span class="dot dot-red"></span><span id="countFail">0</span> Denegados</div>
+        <div class="db-stat-pill"><span class="dot dot-orange"></span><span id="countEm">0</span> Emergencias</div>
+      </div>
+      <button class="db-clear-btn" onclick="clearDB()">🗑 Limpiar registros</button>
+    </div>
+
+    <div class="db-table-wrap reveal">
+      <div class="db-table-head">
+        <div class="db-th">#</div>
+        <div class="db-th">Código</div>
+        <div class="db-th">Fecha</div>
+        <div class="db-th">Horario</div>
+        <div class="db-th">Descripción</div>
+      </div>
+      <div class="db-body" id="dbBody">
+        <div class="db-empty" id="dbEmpty">
+          <div class="db-empty-icon">🗄️</div>
+          Sin registros aún. Utilizá la simulación para generar eventos.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TEAM -->
+
+<div class="team-section" id="equipo">
+  <div class="section-tag reveal" style="display:block;">Autoras del proyecto</div>
+  <h2 class="section-title reveal" style="display:block;">Nuestro <span class="accent">equipo</span></h2>
+  <div class="team-grid">
+    <div class="team-card reveal">
+      <div class="avatar">👩‍💻</div>
+      <div class="tname">Santillan Morena</div>
+      <div class="trole">Desarrollo & Hardware</div>
+    </div>
+    <div class="team-card reveal reveal-delay-1">
+      <div class="avatar">👩‍🔬</div>
+      <div class="tname">Alegre Ariana</div>
+      <div class="trole">Programación & Simulación</div>
+    </div>
+  </div>
+  <div class="info-pills">
+    <span class="info-pill">📚 Curso 7°2</span>
+    <span class="info-pill">👩‍🏫 Prof. Coronel Leonel</span>
+    <span class="info-pill">📅 22 de Abril, 2026</span>
+    <span class="info-pill">🛠️ Tinkercad</span>
+    <span class="info-pill">💙 Frigo Sec AM</span>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<footer>
+  <div class="foot-brand">Frigo<span> Sec</span> AM</div>
+  <div class="foot-info">Santillan Morena & Alegre Ariana · 7°2 · Prof. Coronel Leonel</div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
