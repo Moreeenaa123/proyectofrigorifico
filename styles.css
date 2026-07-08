@@ -528,7 +528,7 @@ nav {
 .panel-led-red   { fill: #EF4444; }
 
 #doorCurtain {
-  transform-box: fill-box; transform-origin: 50% 0%;
+  transform-box: view-box; transform-origin: 0 0;
   transition: transform 1.15s cubic-bezier(.7,0,.3,1);
 }
 #doorCurtain.open { transform: translateY(-272px); }
