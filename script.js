@@ -14,19 +14,99 @@ for(let i=0;i<18;i++){
   fw.appendChild(p);
 }
 
+// ── SOUND ENGINE (Web Audio API) ──
+// Genera cada sonido en tiempo real, sin archivos externos.
+let audioCtx = null;
+let soundOn = true;
+
+function ensureAudio(){
+  if(!audioCtx){
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playTone(freq, duration = 200, opts = {}){
+  if(!soundOn) return;
+  const { type = 'sine', vol = 0.18, delay = 0, glideTo = null } = opts;
+  const ctx = ensureAudio();
+  const t0 = ctx.currentTime + delay / 1000;
+  const t1 = t0 + duration / 1000;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t0);
+  if(glideTo) osc.frequency.linearRampToValueAtTime(glideTo, t1);
+  gain.gain.setValueAtTime(0, t0);
+  gain.gain.linearRampToValueAtTime(vol, t0 + 0.012);
+  gain.gain.linearRampToValueAtTime(0, t1);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(t0);
+  osc.stop(t1 + 0.03);
+}
+
+function sndTick(){ playTone(1500, 40, { type:'square', vol:0.07 }); }
+function sndClear(){ playTone(650, 90, { type:'triangle', vol:0.12, glideTo:400 }); }
+function sndGranted(){
+  playTone(1000, 130, { type:'sine', vol:0.22 });
+  playTone(1400, 240, { type:'sine', vol:0.2, delay:130 });
+}
+function sndDenied(){
+  playTone(400, 480, { type:'sawtooth', vol:0.16 });
+}
+function sndLock(){
+  playTone(500, 150, { type:'square', vol:0.16 });
+  playTone(500, 150, { type:'square', vol:0.16, delay:220 });
+  playTone(500, 150, { type:'square', vol:0.16, delay:440 });
+}
+function sndUnlock(){
+  playTone(700, 90, { type:'triangle', vol:0.14 });
+  playTone(1100, 140, { type:'triangle', vol:0.16, delay:100 });
+}
+
+let sirenTimer = null;
+function sndSirenStart(){
+  if(sirenTimer || !soundOn) return;
+  let high = true;
+  const fire = ()=>{ playTone(high ? 1000 : 700, 260, { type:'square', vol:0.16 }); high = !high; };
+  fire();
+  sirenTimer = setInterval(fire, 280);
+}
+function sndSirenStop(){
+  clearInterval(sirenTimer);
+  sirenTimer = null;
+}
+
+function toggleSound(){
+  soundOn = !soundOn;
+  const btn = document.getElementById('soundToggle');
+  if(btn) btn.textContent = soundOn ? '🔊' : '🔇';
+  if(soundOn) ensureAudio(); else sndSirenStop();
+}
+
+function setDeviceState(state){
+  const el = document.querySelector('.sim-device');
+  if(!el) return;
+  el.classList.remove('st-ok','st-err','st-em');
+  if(state) el.classList.add(state);
+}
+
 // ── HERO KEYPAD ──
 const heroKp = document.getElementById('heroKp');
 ['1','2','3','A','4','5','6','B','7','8','9','C','*','0','#','D'].forEach(l=>{
   const b = document.createElement('button');
   b.className = 'kp-mini' + (l==='🚨'?' em':'');
   b.textContent = l;
-  b.onclick = ()=>{ b.style.background='rgba(28,109,208,0.3)'; setTimeout(()=>b.style.background='',250); };
+  b.onclick = ()=>{ sndTick(); b.style.background='rgba(28,109,208,0.3)'; setTimeout(()=>b.style.background='',250); };
   heroKp.appendChild(b);
 });
 
 // ── SIMULATION ──
 const CODE = '12345';
-let input = '', busy = false;
+const MAX_ATTEMPTS = 3;
+const LOCK_SECONDS = 8;
+let input = '', busy = false, locked = false, attempts = 0, lockInterval = null, emergencyRunning = false;
 
 // ── DATABASE (persiste con window.storage — sin límite de registros) ──
 const DB_KEY = 'frigosec_registros';
@@ -154,10 +234,54 @@ function setLed(id, on){
   const cls = id==='lg'?'green':'red';
   document.getElementById(id).className = 'led' + (on?' '+cls:'');
 }
-function setDoor(open){
-  const el = document.getElementById('doorSt');
-  el.className = 'door-state '+(open?'open':'closed');
-  el.textContent = open ? '🔓 PUERTA ABIERTA' : '🚪 PUERTA CERRADA';
+function updateAttemptDots(){
+  for(let i=1;i<=3;i++){
+    const d = document.getElementById('adot'+i);
+    if(d) d.classList.toggle('used', i <= attempts);
+  }
+}
+// state: 'closed' | 'opening' | 'open' | 'locked'
+function setDoorVisual(state){
+  const curtain = document.getElementById('doorCurtain');
+  const chamber = document.getElementById('doorChamber');
+  const overlay = document.getElementById('lockOverlay');
+  const st = document.getElementById('doorSt');
+  if(!curtain) return;
+  const isOpen = (state === 'open' || state === 'opening');
+  curtain.classList.toggle('open', isOpen);
+  chamber.classList.toggle('active', isOpen);
+  overlay.classList.toggle('show', state === 'locked');
+  st.className = (state === 'locked' ? 'locked' : (isOpen ? 'open' : 'closed'));
+  if(state === 'locked') return; // el texto lo maneja lockSystem() con la cuenta regresiva
+  st.textContent = isOpen ? '🔓 Puerta abierta' : '🚪 Puerta cerrada';
+}
+function setDoor(open){ setDoorVisual(open ? 'open' : 'closed'); }
+
+function lockSystem(){
+  locked = true; busy = true;
+  document.querySelector('.sim-kp').classList.add('is-locked');
+  setDoorVisual('locked');
+  setDeviceState('st-err');
+  sndLock();
+  log('⛔ 3 intentos fallidos — sistema bloqueado ' + LOCK_SECONDS + 's.');
+  const st = document.getElementById('doorSt');
+  let t = LOCK_SECONDS;
+  st.textContent = '⛔ Bloqueada · ' + t + 's';
+  lockInterval = setInterval(()=>{
+    t--;
+    if(t <= 0){ unlockSystem(); }
+    else { st.textContent = '⛔ Bloqueada · ' + t + 's'; }
+  }, 1000);
+}
+function unlockSystem(){
+  if(lockInterval){ clearInterval(lockInterval); lockInterval = null; }
+  locked = false; attempts = 0; busy = false;
+  updateAttemptDots();
+  document.querySelector('.sim-kp').classList.remove('is-locked');
+  setDoorVisual('closed');
+  setDeviceState(null);
+  sndUnlock();
+  log('🔓 Bloqueo finalizado. Sistema en espera.');
 }
 function setBuzzer(on, label=''){
   const el = document.getElementById('bz');
@@ -170,34 +294,60 @@ function updateScreen(){
 }
 async function granted(){
   log('✅ Código correcto — Acceso concedido.');
+  sndGranted();
+  setDeviceState('st-ok');
+  attempts = 0; updateAttemptDots();
   await addDBRecord(input, 'ok', 'Empleado autorizado — Ingreso');
   setLed('lg',true); setDoor(true); setBuzzer(true,'Tono confirmación (1000 Hz)');
   setTimeout(()=>setBuzzer(false), 300);
-  setTimeout(()=>{ setDoor(false); setLed('lg',false); log('🔒 Puerta cerrada. Sistema en espera.'); busy=false; }, 3000);
+  setTimeout(()=>{ setDoor(false); setLed('lg',false); setDeviceState(null); log('🔒 Puerta cerrada. Sistema en espera.'); busy=false; }, 3000);
 }
 async function denied(){
   log('❌ Código incorrecto — Acceso denegado.');
+  sndDenied();
+  setDeviceState('st-err');
+  attempts++; updateAttemptDots();
   await addDBRecord(input, 'fail', 'Código incorrecto — Acceso denegado');
   setLed('lr',true); setBuzzer(true,'Alerta error (400 Hz)');
-  setTimeout(()=>{ setLed('lr',false); setBuzzer(false); log('↩ Reiniciando ingreso...'); busy=false; }, 1500);
+  setTimeout(()=>{
+    setLed('lr',false); setBuzzer(false); setDeviceState(null);
+    if(attempts >= MAX_ATTEMPTS){ lockSystem(); }
+    else { log('↩ Reiniciando ingreso...'); busy=false; }
+  }, 1500);
 }
 function sk(k){
+  if(locked){ sndDenied(); log('⛔ Sistema bloqueado. Esperá la cuenta regresiva.'); return; }
   if(busy) return;
-  if(k==='*'){ input=''; updateScreen(); log('🔄 Código borrado.'); return; }
+  if(k==='*'){ sndClear(); input=''; updateScreen(); log('🔄 Código borrado.'); return; }
   if(k==='#'){
-    if(!input.length){ log('⚠️ Ingresá el código primero.'); return; }
+    if(!input.length){ sndDenied(); log('⚠️ Ingresá el código primero.'); return; }
+    sndTick();
     busy=true; log('🔍 Validando...');
     setTimeout(()=>{ input===CODE?granted():denied(); input=''; updateScreen(); }, 500);
     return;
   }
+  sndTick();
   if(input.length<5){ input+=k; updateScreen(); if(input.length===5) log('✏️ 5 dígitos ingresados. Presioná # para confirmar.'); }
 }
 async function simEmergency(){
-  if(busy) return; busy=true;
+  if(emergencyRunning) return;
+  emergencyRunning = true;
+  if(locked){ // la emergencia siempre tiene prioridad y libera el bloqueo al instante
+    if(lockInterval){ clearInterval(lockInterval); lockInterval = null; }
+    locked = false; attempts = 0; updateAttemptDots();
+    document.querySelector('.sim-kp').classList.remove('is-locked');
+  }
+  busy = true;
   log('🚨 ¡EMERGENCIA ACTIVADA! Abriendo puerta...');
+  sndSirenStart();
+  setDeviceState('st-em');
   await addDBRecord('——', 'em', 'Emergencia — Botón interno activado');
   setLed('lg',true); setDoor(true); setBuzzer(true,'🚨 ALARMA CONTINUA 1000 Hz');
-  setTimeout(()=>{ setBuzzer(false); setDoor(false); setLed('lg',false); log('✅ Emergencia resuelta. Sistema reiniciado.'); busy=false; }, 5000);
+  setTimeout(()=>{
+    sndSirenStop();
+    setBuzzer(false); setDoor(false); setLed('lg',false); setDeviceState(null);
+    log('✅ Emergencia resuelta. Sistema reiniciado.'); busy=false; emergencyRunning=false;
+  }, 5000);
 }
 
 // ── SCROLL REVEAL ──

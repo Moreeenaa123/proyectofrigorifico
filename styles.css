@@ -231,9 +231,10 @@ nav {
   font-family: var(--font-head); font-weight: 700; font-size: 0.88rem;
   color: white; cursor: pointer; letter-spacing: 0.03em;
   box-shadow: 0 6px 20px rgba(28,109,208,0.4);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s, background 0.3s;
 }
 .card-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(28,109,208,0.5); }
+.card-btn.granted { background: #16A34A; box-shadow: 0 10px 28px rgba(22,163,74,0.5); }
 
 /* floating badges */
 .float-badge {
@@ -437,18 +438,35 @@ nav {
 .sim-inner { max-width: 1440px; margin: 0 auto; padding: 0 5rem; }
 .sim-layout {
   display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: start;
-  margin-top: 3.5rem;
+  margin-top: 0;
 }
 .sim-device {
   background: var(--polar); border-radius: 28px; padding: 2rem;
   box-shadow: 0 40px 80px rgba(11,19,43,0.2);
   border: 1px solid rgba(28,109,208,0.2);
+  transition: box-shadow 0.5s ease, border-color 0.5s ease, transform 0.15s ease;
+}
+.sim-device.st-ok  { border-color: rgba(34,197,94,0.55); box-shadow: 0 40px 80px rgba(11,19,43,0.2), 0 0 46px rgba(34,197,94,0.28); }
+.sim-device.st-err { border-color: rgba(239,68,68,0.55); box-shadow: 0 40px 80px rgba(11,19,43,0.2), 0 0 46px rgba(239,68,68,0.28); }
+.sim-device.st-em  { border-color: rgba(234,88,12,0.65); box-shadow: 0 40px 80px rgba(11,19,43,0.2), 0 0 54px rgba(234,88,12,0.4); animation: deviceShake 0.35s ease-in-out infinite; }
+@keyframes deviceShake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-1.5px); }
+  75%      { transform: translateX(1.5px); }
 }
 .sim-brand-row {
   display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1.5rem;
 }
 .sim-brand-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--glacier); animation: blink 2s infinite; }
 .sim-brand-label { font-family: var(--font-head); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(242,247,255,0.4); }
+.sound-toggle {
+  margin-left: auto; width: 30px; height: 30px; border-radius: 8px;
+  background: rgba(242,247,255,0.06); border: 1px solid rgba(242,247,255,0.14);
+  color: var(--silk); font-size: 0.85rem; cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+.sound-toggle:hover { background: rgba(28,109,208,0.35); }
+.sound-toggle:active { transform: scale(0.9); }
 .sim-screen {
   background: rgba(0,0,0,0.4); border-radius: 12px; padding: 1rem 1.2rem;
   font-family: 'Courier New', monospace; font-size: 1rem; letter-spacing: 0.2em;
@@ -458,8 +476,9 @@ nav {
 }
 .sim-kp {
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
-  margin-bottom: 1.2rem;
+  margin-bottom: 1.2rem; transition: opacity 0.3s;
 }
+.sim-kp.is-locked { opacity: 0.35; }
 .sk {
   height: 50px; border-radius: 10px;
   background: rgba(242,247,255,0.06); border: 1px solid rgba(242,247,255,0.1);
@@ -468,7 +487,7 @@ nav {
   transition: background 0.15s, transform 0.1s;
 }
 .sk:hover { background: rgba(28,109,208,0.3); }
-.sk:active { transform: scale(0.93); }
+.sk:active { transform: scale(0.91); box-shadow: 0 0 0 3px rgba(28,109,208,0.3) inset; }
 .sk.del { color: #F87171; }
 .sk.ok { background: var(--glacier); color: white; box-shadow: 0 4px 16px rgba(28,109,208,0.4); }
 .sk.ok:hover { background: #1a5fb8; }
@@ -478,9 +497,10 @@ nav {
   border-radius: 10px; color: #F87171;
   font-family: var(--font-head); font-weight: 700; font-size: 0.82rem;
   letter-spacing: 0.04em; cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.12s, box-shadow 0.2s;
 }
-.sim-em-btn:hover { background: rgba(220,38,38,0.28); }
+.sim-em-btn:hover { background: rgba(220,38,38,0.28); box-shadow: 0 0 22px rgba(220,38,38,0.25); }
+.sim-em-btn:active { transform: scale(0.97); }
 .sim-hint-text {
   text-align: center; font-family: var(--font-head); font-size: 0.7rem;
   color: rgba(242,247,255,0.25); margin-top: 0.8rem; font-style: italic;
@@ -492,14 +512,68 @@ nav {
   font-family: var(--font-head); font-weight: 800; font-size: 1.1rem;
   color: var(--polar); margin-bottom: 0.3rem;
 }
-.door-state {
-  background: var(--silk); border-radius: 16px; padding: 1.5rem;
-  text-align: center; border: 1px solid rgba(11,19,43,0.08);
-  font-family: var(--font-head); font-size: 1.3rem; font-weight: 800;
-  transition: all 0.4s;
+
+/* ── ESCENA DE PUERTA ENROLLABLE (referencia: cámara frigorífica industrial) ── */
+.door-scene {
+  position: relative;
+  margin: 0 0 1.4rem;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 16px 34px rgba(11,19,43,0.22);
+  border: 1px solid rgba(11,19,43,0.1);
 }
-.door-state.open { color: #16A34A; background: #F0FDF4; border-color: #BBF7D0; }
-.door-state.closed { color: var(--polar); }
+.door-scene-svg { width: 100%; height: auto; display: block; }
+
+.panel-led-green { fill: #22C55E; }
+.panel-led-red   { fill: #EF4444; }
+
+#doorCurtain {
+  transform-box: fill-box; transform-origin: 50% 0%;
+  transition: transform 1.15s cubic-bezier(.7,0,.3,1);
+}
+#doorCurtain.open { transform: translateY(-272px); }
+
+.door-mist { fill: #7FD4FF; opacity: 0; transition: opacity 0.9s ease; }
+#doorChamber.active .door-mist { opacity: 0.7; }
+
+#lockOverlay {
+  opacity: 0; transform: scale(0.9);
+  transform-box: fill-box; transform-origin: 50% 50%;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+#lockOverlay.show { opacity: 1; transform: scale(1); animation: lockPulse 1s ease-in-out infinite; }
+@keyframes lockPulse {
+  0%, 100% { filter: brightness(1); }
+  50%      { filter: brightness(1.3); }
+}
+
+.door-scene-caption {
+  position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  background: rgba(11,19,43,0.7); backdrop-filter: blur(10px) saturate(140%);
+  padding: 0.65rem 1.5rem 0.75rem; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+#doorSt {
+  font-family: var(--font-head); font-weight: 800; font-size: 0.92rem;
+  letter-spacing: 0.01em; color: #fff; transition: color 0.4s;
+}
+#doorSt.open   { color: #4ADE80; }
+#doorSt.closed { color: #EAF0FA; }
+#doorSt.locked { color: #FCA5A5; }
+
+.attempt-dots { display: flex; justify-content: center; gap: 8px; }
+.attempt-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,255,255,0.22); transition: background 0.25s, box-shadow 0.25s;
+}
+.attempt-dot.used { background: #EF4444; box-shadow: 0 0 8px rgba(239,68,68,0.7); }
+
+@media (max-width: 700px) {
+  .door-scene { margin: 0 0 1.2rem; }
+  #wallPanelDecor { display: none; }
+}
 
 .led-panel {
   background: var(--silk); border-radius: 16px; padding: 1.2rem 1.5rem;
@@ -511,15 +585,42 @@ nav {
   width: 18px; height: 18px; border-radius: 50%;
   background: rgba(11,19,43,0.1); transition: all 0.4s;
 }
-.led.green { background: #22C55E; box-shadow: 0 0 10px #22C55E, 0 0 24px rgba(34,197,94,0.35); }
-.led.red   { background: #EF4444; box-shadow: 0 0 10px #EF4444, 0 0 24px rgba(239,68,68,0.35); }
+.led.green { background: #22C55E; box-shadow: 0 0 10px #22C55E, 0 0 24px rgba(34,197,94,0.35); animation: ledPulse 1.3s ease-in-out infinite; }
+.led.red   { background: #EF4444; box-shadow: 0 0 10px #EF4444, 0 0 24px rgba(239,68,68,0.35); animation: ledPulse 1.3s ease-in-out infinite; }
+@keyframes ledPulse {
+  0%, 100% { filter: brightness(1); }
+  50%      { filter: brightness(1.35); }
+}
 .led-lbl { font-family: var(--font-head); font-size: 0.82rem; font-weight: 600; color: var(--polar); }
 
 .buzzer-row {
   font-family: var(--font-head); font-size: 0.8rem; font-weight: 500;
-  color: rgba(11,19,43,0.45); transition: color 0.3s;
+  color: rgba(11,19,43,0.45); transition: all 0.3s;
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.1rem 0; border-radius: 8px;
 }
-.buzzer-row.active { color: #D97706; animation: blink 0.5s infinite; }
+.buzzer-row.active {
+  color: #D97706; font-weight: 700;
+  animation: buzzGlow 0.5s ease-in-out infinite;
+}
+.buzzer-row.active::after {
+  content: ''; display: inline-flex; width: 14px; height: 10px;
+  background:
+    linear-gradient(#D97706, #D97706) 0 100%/2px 40% no-repeat,
+    linear-gradient(#D97706, #D97706) 4px 100%/2px 100% no-repeat,
+    linear-gradient(#D97706, #D97706) 8px 100%/2px 60% no-repeat,
+    linear-gradient(#D97706, #D97706) 12px 100%/2px 80% no-repeat;
+  background-repeat: no-repeat;
+  animation: barsBounce 0.6s ease-in-out infinite;
+}
+@keyframes buzzGlow {
+  0%, 100% { text-shadow: 0 0 0 rgba(217,119,6,0); }
+  50%      { text-shadow: 0 0 10px rgba(217,119,6,0.55); }
+}
+@keyframes barsBounce {
+  0%, 100% { opacity: 0.5; transform: scaleY(0.7); }
+  50%      { opacity: 1; transform: scaleY(1); }
+}
 
 .log-box {
   background: var(--silk); border-radius: 14px; padding: 1.2rem 1.4rem;
